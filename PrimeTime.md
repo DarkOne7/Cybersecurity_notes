@@ -1,7 +1,9 @@
-# Challenge Name
+# Prime Time
 
 **Category:** Crypto
+
 **Difficulty:** Easy
+
 **Points:** 25
 
 ---
