@@ -1,0 +1,114 @@
+# Prime Time
+
+**Category:** Crypto
+
+**Difficulty:** Easy
+
+**Points:** 25
+
+---
+
+## Challenge Description
+Our security team intercepted an encrypted message from a mysterious source! We managed to obtain the target's public key components.
+However, during our investigation, we discovered that one of their private key components was accidentally published on an unsecured server!
+
+---
+
+## Initial Analysis
+We were given one file that had everything needed to solve the challenge.
+
+```python
+=== Intercepted Encrypted Message ===
+
+ciphertext = 7542069583043416807452553211097827563470682071572429815679869990681195991689118606379814159564977708578317869931634576286998617751467377481689531028872559287315494504937856065012239953916794992144403922067468433860167270142361449581924727575288593745784169996502257109659927206432888579117792656968701076957165772580318947902569670302444363484622324132788629212183317805804668382990889253975525432562896059378168492513786491326868679194138009976194283715088628524705176665804404751533851985305547948231110262797494804504609270604282807272038498673992761913057381230614846843958234511763979488427254180506475264982385
+
+=== RSA Public Key Components ===
+
+n = 27176393407935103481163155837427742913736162805163960331439171299917803847839120808804732675657161001205777890520029973936343262372935454665420601809184894777707812681056603978295816651555470815138953238837510805670059628515533201723738377384999931828902088379359668739224568459312311491647662096047608516941790769030123418245983210222253698355788103344141929121912734282726220821892263490249842323331218356969957620712358194016204473618770451542777841273366511873769514760320835637280801421908082271238575146984814792169032375163458775970856228129500375398873773737464366440067238916256182804432304462869247002029101
+
+e = 65537
+
+=== LEAKED PRIVATE KEY COMPONENT ===
+(Oops! This wasn't supposed to be public...)
+
+q = 168008506905664925715285139876758539830754830224705503363675220828724350021417486524153965414795915910336943871042520716787575587167438973647616275446906752249150745789966942951708080250022889744527067101811169627378390925138067431522589236137308344943601351833634383376801541020263961063873667195177625444329
+```
+
+As you can see this is a very basic RSA challenge all we had to do sience we have the private component "q" we can do simple math to decrypt the flag or use tools like RSACtftool or dcode.fr.
+
+---
+
+## Vulnerability / Weakness
+RSA security depends on the difficulty of factoring `n` into its prime components:
+
+```
+n = p × q
+```
+
+If one of the primes is known, we can compute the other:
+
+```
+p = n // q
+```
+This comletely breaks RSA security.
+
+---
+
+## Exploitation
+
+### Step 1 – Recover the Missing Prime
+
+We compute:
+
+```
+p = n // q
+```
+
+---
+
+### Step 2 – Compute φ(n)
+
+For RSA:
+
+```
+φ(n) = (p - 1)(q - 1)
+```
+
+---
+
+### Step 3 – Compute Private Exponent
+
+We compute:
+
+```
+d = e⁻¹ mod φ(n)
+```
+
+Or simpily run this script
+```python3
+from Crypto.Util.number import long_to_bytes, inverse, GCD
+
+q = <PrivateComponent>
+n = <publicKey>
+
+if n % q != 0:
+    raise ValueError("q is not a factor of n")
+p = n // q
+
+phi = (p-1)*(q-1)
+
+e = 65537 # most common
+d = inverse(e, phi)
+
+c = <ciphertext>
+# decrypt: m = c^d mod n
+m2 = pow(c, d, n)
+flag = long_to_bytes(m2)
+
+print("flag =", flag)
+```
+
+## And there you go you got the flag:
+```
+ZiChamp{0n3_pr1m3_l34k3d_rsa_t0t4lly_br0k3n!}
+```
